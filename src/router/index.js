@@ -82,7 +82,8 @@ const router = createRouter({
 function requiresProfileNameSetup() {
   const profile = store.state.game.snapshot?.profile
   if (!profile) return false
-  return !Boolean(profile.name_customized)
+  const displayName = String(profile.display_name || '').trim()
+  return !displayName
 }
 
 router.beforeEach(async (to) => {

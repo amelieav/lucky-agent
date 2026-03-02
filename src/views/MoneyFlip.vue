@@ -4,6 +4,38 @@
       <div>
         <h1 class="text-xl font-semibold">Money Flip</h1>
         <p class="text-sm text-muted">Flop 3, pick your second card, then beat the duck's hand.</p>
+        <details class="moneyflip-howto mt-2">
+          <summary>How To Play</summary>
+          <div class="moneyflip-howto__body">
+            <p>
+              You and the duck each build a best 5-card poker hand from 7 total cards:
+              your 2 hole cards + 5 board cards.
+            </p>
+            <p>
+              Modified flow in Money Flip:
+              the flop (3 cards) and your first hole card are revealed first, then you pick 1 of 3 cards as your second hole card.
+              The turn and river are dealt after your pick.
+            </p>
+            <p class="moneyflip-howto__label">Hand strength (highest to lowest):</p>
+            <ol class="moneyflip-howto__list">
+              <li>Straight Flush</li>
+              <li>Four of a Kind</li>
+              <li>Full House</li>
+              <li>Flush</li>
+              <li>Straight</li>
+              <li>Three of a Kind</li>
+              <li>Two Pair</li>
+              <li>One Pair</li>
+              <li>High Card</li>
+            </ol>
+            <p>
+              Winnings:
+              win = +wager (your return shown as double payout),
+              loss = -wager,
+              tie = push (0 net change).
+            </p>
+          </div>
+        </details>
       </div>
       <div class="text-right text-sm space-y-1">
         <div>
@@ -647,6 +679,44 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.9);
   color: #173059;
   font-weight: 600;
+}
+
+.moneyflip-howto {
+  width: min(42rem, 100%);
+  border: 1px solid rgba(120, 143, 194, 0.28);
+  border-radius: 0.72rem;
+  background: rgba(245, 249, 255, 0.78);
+  padding: 0.45rem 0.65rem;
+}
+
+.moneyflip-howto > summary {
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #29497c;
+}
+
+.moneyflip-howto__body {
+  margin-top: 0.45rem;
+  border-top: 1px solid rgba(120, 143, 194, 0.24);
+  padding-top: 0.45rem;
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.73rem;
+  color: #2a426e;
+}
+
+.moneyflip-howto__label {
+  font-weight: 700;
+  color: #1f3c6a;
+}
+
+.moneyflip-howto__list {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.14rem;
 }
 
 .wager-chip {

@@ -12,9 +12,6 @@
       <div class="mt-4 rounded-xl border border-soft bg-panel-soft p-4">
         <p class="text-xs uppercase tracking-wide text-muted">Leaderboard Name</p>
         <p class="mt-1 text-lg font-semibold">{{ currentName }}</p>
-        <p v-if="!nameCustomized" class="mt-1 text-xs text-amber-700">
-          Name setup required before playing.
-        </p>
       </div>
 
       <form class="mt-4 grid gap-3" @submit.prevent="saveName">
@@ -113,7 +110,8 @@ const validation = computed(() => validateDisplayName(draftName.value))
 const validationMessage = computed(() => (validation.value.ok ? '' : validation.value.message))
 const canSave = computed(() => {
   if (!validation.value.ok) return false
-  return validation.value.value !== (currentName.value || '')
+  if (!nameCustomized.value) return true
+  return validation.value.value !== String(currentName.value || '')
 })
 
 watch(

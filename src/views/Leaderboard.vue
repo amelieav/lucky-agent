@@ -113,11 +113,11 @@
           <div class="mt-2 grid gap-2 md:grid-cols-2">
             <div class="podium-tile podium-tile--gold">
               <p class="text-[11px] uppercase tracking-wide text-amber-900">First Full Holo · Base Pack</p>
-              <p class="mt-1 text-xs font-semibold text-amber-900">{{ firstFullHoloLabel(1) }}</p>
+              <p class="mt-1 text-xs font-semibold text-amber-900">{{ firstFullHoloLabel(row, 1) }}</p>
             </div>
             <div class="podium-tile podium-tile--gold">
               <p class="text-[11px] uppercase tracking-wide text-amber-900">First Full Holo · Booster Pack</p>
-              <p class="mt-1 text-xs font-semibold text-amber-900">{{ firstFullHoloLabel(2) }}</p>
+              <p class="mt-1 text-xs font-semibold text-amber-900">{{ firstFullHoloLabel(row, 2) }}</p>
             </div>
           </div>
 
@@ -396,16 +396,27 @@ function personalBestCardLabel(row) {
   return `Best card: ${row.best_term_name || row.best_term_key} · T${row.best_term_tier} · ${row.best_term_rarity} · ${mutationLabel(row.best_term_mutation)}`
 }
 
-function firstFullHoloLabel(layerNumber) {
+function firstFullHoloLabel(seasonRow, layerNumber) {
   const layer = Math.max(1, Math.min(2, Number(layerNumber || 1)))
+  const startMs = Date.parse(String(seasonRow?.starts_at || ''))
+  const endMs = Date.parse(String(seasonRow?.ends_at || ''))
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
+    return 'Season window unavailable'
+  }
+
   const first = (completionBoardRows.value || [])
-    .filter((row) => Number(row?.layer || 1) === layer && row?.all_holo_completed_at)
+    .filter((entry) => Number(entry?.layer || 1) === layer)
+    .map((entry) => ({
+      ...entry,
+      completedMs: Date.parse(String(entry?.all_holo_completed_at || '')),
+    }))
+    .filter((entry) => Number.isFinite(entry.completedMs) && entry.completedMs >= startMs && entry.completedMs < endMs)
     .sort((a, b) => {
-      const aMs = Date.parse(String(a?.all_holo_completed_at || '')) || Number.MAX_SAFE_INTEGER
-      const bMs = Date.parse(String(b?.all_holo_completed_at || '')) || Number.MAX_SAFE_INTEGER
-      return aMs - bMs
+      if (a.completedMs !== b.completedMs) return a.completedMs - b.completedMs
+      return String(a.display_name || '').localeCompare(String(b.display_name || ''))
     })[0]
-  if (!first) return 'No full holo completion yet'
+
+  if (!first) return 'No full holo completion this season'
   return `${first.display_name || 'Unknown'} (${formatDateTime(first.all_holo_completed_at)})`
 }
 
@@ -466,5 +477,4 @@ function toOrdinal(value) {
   background: linear-gradient(145deg, #f7c59e 0%, #e7a06c 52%, #fde2cc 100%);
 }
 </style>
-
 
