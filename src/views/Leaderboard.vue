@@ -110,7 +110,7 @@
             </div>
           </div>
 
-          <div class="mt-2 grid gap-2 md:grid-cols-2">
+          <div v-if="showCollectionistSection(row)" class="mt-2 grid gap-2 md:grid-cols-2">
             <div class="podium-tile podium-tile--gold">
               <p class="text-[11px] uppercase tracking-wide text-amber-900">First Full Holo · Base Pack</p>
               <p class="mt-1 text-xs font-semibold text-amber-900">{{ firstFullHoloLabel(row, 1) }}</p>
@@ -396,15 +396,16 @@ function personalBestCardLabel(row) {
   return `Best card: ${row.best_term_name || row.best_term_key} · T${row.best_term_tier} · ${row.best_term_rarity} · ${mutationLabel(row.best_term_mutation)}`
 }
 
-function firstFullHoloLabel(seasonRow, layerNumber) {
+function firstFullHoloEntry(seasonRow, layerNumber) {
+  const seasonId = String(seasonRow?.season_id || '').trim().toLowerCase()
+  if (seasonId === 'week-2026-02-16') return null
+
   const layer = Math.max(1, Math.min(2, Number(layerNumber || 1)))
   const startMs = Date.parse(String(seasonRow?.starts_at || ''))
   const endMs = Date.parse(String(seasonRow?.ends_at || ''))
-  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
-    return 'Season window unavailable'
-  }
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) return null
 
-  const first = (completionBoardRows.value || [])
+  return (completionBoardRows.value || [])
     .filter((entry) => Number(entry?.layer || 1) === layer)
     .map((entry) => ({
       ...entry,
@@ -415,7 +416,14 @@ function firstFullHoloLabel(seasonRow, layerNumber) {
       if (a.completedMs !== b.completedMs) return a.completedMs - b.completedMs
       return String(a.display_name || '').localeCompare(String(b.display_name || ''))
     })[0]
+}
 
+function showCollectionistSection(seasonRow) {
+  return Boolean(firstFullHoloEntry(seasonRow, 1) || firstFullHoloEntry(seasonRow, 2))
+}
+
+function firstFullHoloLabel(seasonRow, layerNumber) {
+  const first = firstFullHoloEntry(seasonRow, layerNumber)
   if (!first) return 'No full holo completion this season'
   return `${first.display_name || 'Unknown'} (${formatDateTime(first.all_holo_completed_at)})`
 }
@@ -477,4 +485,3 @@ function toOrdinal(value) {
   background: linear-gradient(145deg, #f7c59e 0%, #e7a06c 52%, #fde2cc 100%);
 }
 </style>
-
