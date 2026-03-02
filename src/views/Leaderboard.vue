@@ -398,12 +398,14 @@ function personalBestCardLabel(row) {
 
 function isExcludedBackfilledSeason(seasonRow) {
   const seasonId = String(seasonRow?.season_id || '').trim().toLowerCase()
-  if (seasonId === 'week-2026-02-16') return true
+  // Some clients/timezones can render the same UTC season boundary as Feb 16 even
+  // when the stored key is the next UTC date. Exclude both keys.
+  if (seasonId === 'week-2026-02-16' || seasonId === 'week-2026-02-17') return true
 
   const startsAtMs = Date.parse(String(seasonRow?.starts_at || ''))
   if (!Number.isFinite(startsAtMs)) return false
   const startsAtIsoDate = new Date(startsAtMs).toISOString().slice(0, 10)
-  return startsAtIsoDate === '2026-02-16'
+  return startsAtIsoDate === '2026-02-16' || startsAtIsoDate === '2026-02-17'
 }
 
 function firstFullHoloEntry(seasonRow, layerNumber) {
