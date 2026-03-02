@@ -396,25 +396,29 @@ function personalBestCardLabel(row) {
   return `Best card: ${row.best_term_name || row.best_term_key} · T${row.best_term_tier} · ${row.best_term_rarity} · ${mutationLabel(row.best_term_mutation)}`
 }
 
-function isExcludedBackfilledSeason(seasonRow) {
-  const seasonId = String(seasonRow?.season_id || '').trim().toLowerCase()
-  // Some clients/timezones can render the same UTC season boundary as Feb 16 even
-  // when the stored key is the next UTC date. Exclude both keys.
-  if (seasonId === 'week-2026-02-16' || seasonId === 'week-2026-02-17') return true
+function seasonWindowMs(seasonRow) {
+  const rawSeasonId = String(seasonRow?.season_id || '').trim()
+  const seasonIdMatch = /^week-(\d{4})-(\d{2})-(\d{2})$/i.exec(rawSeasonId)
+  if (seasonIdMatch) {
+    const startMs = Date.parse(`${seasonIdMatch[1]}-${seasonIdMatch[2]}-${seasonIdMatch[3]}T00:00:00Z`)
+    if (Number.isFinite(startMs)) {
+      return {
+        startMs,
+        endMs: startMs + (7 * 24 * 60 * 60 * 1000),
+      }
+    }
+  }
 
-  const startsAtMs = Date.parse(String(seasonRow?.starts_at || ''))
-  if (!Number.isFinite(startsAtMs)) return false
-  const startsAtIsoDate = new Date(startsAtMs).toISOString().slice(0, 10)
-  return startsAtIsoDate === '2026-02-16' || startsAtIsoDate === '2026-02-17'
-}
-
-function firstFullHoloEntry(seasonRow, layerNumber) {
-  if (isExcludedBackfilledSeason(seasonRow)) return null
-
-  const layer = Math.max(1, Math.min(2, Number(layerNumber || 1)))
   const startMs = Date.parse(String(seasonRow?.starts_at || ''))
   const endMs = Date.parse(String(seasonRow?.ends_at || ''))
   if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) return null
+  return { startMs, endMs }
+}
+
+function firstFullHoloEntry(seasonRow, layerNumber) {
+  const layer = Math.max(1, Math.min(2, Number(layerNumber || 1)))
+  const window = seasonWindowMs(seasonRow)
+  if (!window) return null
 
   return (completionBoardRows.value || [])
     .filter((entry) => Number(entry?.layer || 1) === layer)
@@ -422,7 +426,7 @@ function firstFullHoloEntry(seasonRow, layerNumber) {
       ...entry,
       completedMs: Date.parse(String(entry?.all_holo_completed_at || '')),
     }))
-    .filter((entry) => Number.isFinite(entry.completedMs) && entry.completedMs >= startMs && entry.completedMs < endMs)
+    .filter((entry) => Number.isFinite(entry.completedMs) && entry.completedMs >= window.startMs && entry.completedMs < window.endMs)
     .sort((a, b) => {
       if (a.completedMs !== b.completedMs) return a.completedMs - b.completedMs
       return String(a.display_name || '').localeCompare(String(b.display_name || ''))
@@ -430,7 +434,6 @@ function firstFullHoloEntry(seasonRow, layerNumber) {
 }
 
 function showCollectionistSection(seasonRow) {
-  if (isExcludedBackfilledSeason(seasonRow)) return false
   return Boolean(firstFullHoloEntry(seasonRow, 1) || firstFullHoloEntry(seasonRow, 2))
 }
 
