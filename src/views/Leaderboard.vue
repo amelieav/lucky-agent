@@ -396,9 +396,18 @@ function personalBestCardLabel(row) {
   return `Best card: ${row.best_term_name || row.best_term_key} · T${row.best_term_tier} · ${row.best_term_rarity} · ${mutationLabel(row.best_term_mutation)}`
 }
 
-function firstFullHoloEntry(seasonRow, layerNumber) {
+function isExcludedBackfilledSeason(seasonRow) {
   const seasonId = String(seasonRow?.season_id || '').trim().toLowerCase()
-  if (seasonId === 'week-2026-02-16') return null
+  if (seasonId === 'week-2026-02-16') return true
+
+  const startsAtMs = Date.parse(String(seasonRow?.starts_at || ''))
+  if (!Number.isFinite(startsAtMs)) return false
+  const startsAtIsoDate = new Date(startsAtMs).toISOString().slice(0, 10)
+  return startsAtIsoDate === '2026-02-16'
+}
+
+function firstFullHoloEntry(seasonRow, layerNumber) {
+  if (isExcludedBackfilledSeason(seasonRow)) return null
 
   const layer = Math.max(1, Math.min(2, Number(layerNumber || 1)))
   const startMs = Date.parse(String(seasonRow?.starts_at || ''))
@@ -419,6 +428,7 @@ function firstFullHoloEntry(seasonRow, layerNumber) {
 }
 
 function showCollectionistSection(seasonRow) {
+  if (isExcludedBackfilledSeason(seasonRow)) return false
   return Boolean(firstFullHoloEntry(seasonRow, 1) || firstFullHoloEntry(seasonRow, 2))
 }
 
